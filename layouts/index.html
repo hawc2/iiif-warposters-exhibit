@@ -103,6 +103,9 @@
           {{ end }}
         {{ end }}
       {{ end }}
+      {{ if not $service }}
+        {{ $service = $item.manifest | replace "/iiif/" "/iiif/2/" | replace "/manifest.json" "" }}
+      {{ end }}
       {{ $thumb := printf "%s/full/700,/0/default.jpg" $service }}
       {{ $large := printf "%s/full/1200,/0/default.jpg" $service }}
       <article class="card reveal" style="--delay: {{ mul $index 0.06 }}s;">
