@@ -83,31 +83,20 @@
 <section class="gallery wrap">
   <div class="section-title">
     <h2>Selected posters</h2>
-    <p>Images are pulled live from IIIF manifests for each poster.</p>
+    <p>Images are rendered from IIIF Image API sizes published per item.</p>
   </div>
   <div class="card-grid">
     {{ range $index, $item := $items }}
-      {{ $manifest := getJSON $item.manifest }}
-      {{ $service := "" }}
-      {{ with $manifest }}
-        {{ $seq := index .sequences 0 }}
-        {{ $canvas := index $seq.canvases 0 }}
-        {{ $image := index $canvas.images 0 }}
-        {{ $resource := $image.resource }}
-        {{ with $resource.service }}
-          {{ if reflect.IsSlice . }}
-            {{ $svc := index . 0 }}
-            {{ $service = (index $svc "@id") | default (index $svc "id") }}
-          {{ else }}
-            {{ $service = (index . "@id") | default (index . "id") }}
-          {{ end }}
-        {{ end }}
-      {{ end }}
-      {{ if not $service }}
-        {{ $service = $item.manifest | replace "/iiif/" "/iiif/2/" | replace "/manifest.json" "" }}
-      {{ end }}
-      {{ $thumb := printf "%s/full/700,/0/default.jpg" $service }}
-      {{ $large := printf "%s/full/1200,/0/default.jpg" $service }}
+      {{ $service := $item.manifest | replace "/iiif/" "/iiif/2/" | replace "/manifest.json" "" }}
+      {{ $info := getJSON (printf "%s/info.json" $service) }}
+      {{ $sizes := $info.sizes | default (slice) }}
+      {{ $sizeCount := len $sizes }}
+      {{ $largeIndex := sub $sizeCount 1 }}
+      {{ $thumbIndex := cond (gt $sizeCount 2) (sub $sizeCount 3) (cond (gt $sizeCount 1) (sub $sizeCount 2) $largeIndex) }}
+      {{ $thumbSize := index $sizes $thumbIndex }}
+      {{ $largeSize := index $sizes $largeIndex }}
+      {{ $thumb := printf "%s/full/%d,%d/0/default.jpg" $service $thumbSize.width $thumbSize.height }}
+      {{ $large := printf "%s/full/%d,%d/0/default.jpg" $service $largeSize.width $largeSize.height }}
       <article class="card reveal" style="--delay: {{ mul $index 0.06 }}s;">
         <a class="image-link" href="{{ $item.record }}" target="_blank" rel="noopener">
           <div class="image-frame">
